@@ -77,12 +77,12 @@ class BezierEnvelope(inkex.Effect):
 
 	def __init__(self):
 			inkex.Effect.__init__(self)
-	
+
 	def effect(self):
 		if len(self.options.ids) < 2:
 			raise Exception, "Two paths must be selected. The 1st is the letter, the 2nd is the envelope and must have 4 sides."
 			exit()
-            
+
 		letterElement = self.selected[self.options.ids[0]]
 		envelopeElement = self.selected[self.options.ids[1]]
 
@@ -101,13 +101,13 @@ class BezierEnvelope(inkex.Effect):
 				raise Exception, "axes[%i] is None" % i
 		# morph the enveloped element according to the axes
 		morphElement( letterElement, envelopeElement, axes );
-	
+
 def morphElement( letterElement, envelopeElement, axes ):
 	path = simplepath.parsePath( letterElement.get('d') )
 	morphedPath = morphPath( path, axes )
 	letterElement.set("d", simplepath.formatPath(morphedPath))
 
-	
+
 # Morphs a path into a new path, according to cubic curved bounding axes.
 def morphPath( path, axes ):
 	bounds = simpletransform.roughBBox( cubicsuperpath.CubicSuperPath(path) )
@@ -133,7 +133,7 @@ def morphPath( path, axes ):
 			current[1] = points[ len(points)-1 ]
 	return newPath
 
-	
+
 def getNumPts( segmentType ):
 	if segmentType == "M":
 		return 1
@@ -146,9 +146,9 @@ def getNumPts( segmentType ):
 	if segmentType == "Z":
 		return 0
 	return -1
-	
 
-	
+
+
 def addSegment( path, segmentType, points ):
 	path.append([segmentType,points])
 
@@ -217,7 +217,7 @@ def normalizePoints( bounds, points, percentages, numPts ):
 		percentages[x] = (points[x] - xmin) / (xMax-xmin)
 		percentages[y] = (points[y] - ymin) / (yMax-ymin)
 
-	
+
 
 # Extracts 4 axes from a path. It is assumed that the path starts with a move, followed by 4 cubic paths.
 # The extraction reverses the last 2 axes, so that they run in parallel with the first 2.
@@ -230,11 +230,11 @@ def extractMorphAxes( path ):
 	# the curved axis definitions go in here
 	axes = [None]*4
 	i = 0
-	
+
 	for cmd, params in path:
 		points = params
 		cmd = convertSegmentToCubic( current, cmd, points, start )
-		
+
 		if cmd == "M":
 			current[0] = points[0]
 			current[1] = points[1]
@@ -242,7 +242,7 @@ def extractMorphAxes( path ):
 			start[1] = points[1]
 
 		elif cmd == "C":
-			
+
 			# 1st cubic becomes x axis 0
 			# 2nd cubic becomes y axis 1
 			# 3rd cubic becomes x axis 2 and is reversed
@@ -269,10 +269,10 @@ def extractMorphAxes( path ):
 		else:
 			raise Exception, "Unsupported segment type: %s" % cmd
 			return None
-		
+
 	return axes
 
-		
+
 # Projects points in percentage coordinates into a morphed coordinate system that is framed
 # by 2 x cubic curves (along the x axis) and 2 y cubic curves (along the y axis).
 # @param axes The x and y axes of the envelope.
@@ -310,7 +310,7 @@ def mapPointsToMorph( axes, percentage, morphed, numPts ):
 		morphedPoint = pointOnCubic( tweenedY, percentage[y] )
 		morphed[x] = morphedPoint[0]
 		morphed[y] = morphedPoint[1]
-		
+
 # Calculates the point on a cubic bezier curve at the given percentage.
 def pointOnCubic( c, t ):
 	point = [0.0,0.0]
@@ -319,7 +319,7 @@ def pointOnCubic( c, t ):
 	_1_t = 1-t
 	_1_t_2 = _1_t*_1_t
 	_1_t_3 = _1_t_2*_1_t
-	
+
 	for i in range( 0, 2 ):
 		point[i] = c[i]*_1_t_3 + 3*c[2+i]*_1_t_2*t + 3*c[4+i]*_1_t*_t_2 + c[6+i]*_t_3
 	return point
@@ -376,7 +376,7 @@ def rotateTransform( a ):
 
 def scaleTransform( sx, sy ):
 	return [[sx,0,0],[0,sy,0]]
-	
+
 e = BezierEnvelope()
 e.affect()
 
