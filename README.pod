@@ -2,7 +2,7 @@
 
 =head1 ABOUT
 
-This is the update of the Beizer Envelope extension for Inkscape (
+This is the update of the Bezier Envelope extension for Inkscape (
 L<http://inkscape.org/> - an open-source vector graphics editor) version
 0.48.
 
