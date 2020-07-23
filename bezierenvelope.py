@@ -67,10 +67,14 @@ were copied into this file.
 I hope the comments are not too verbose. Enjoy!
 
 '''
-import inkex, os, simplepath, cubicsuperpath, simpletransform
+import inkex
+import simplepath
+import cubicsuperpath
+import simpletransform
 import math
 import sys
-from ffgeom import *
+# from ffgeom import *
+import ffgeom
 
 
 class BezierEnvelope(inkex.Effect):
@@ -92,7 +96,7 @@ class BezierEnvelope(inkex.Effect):
 			raise Exception("Both letter and envelope must be SVG paths.")
 			exit()
 
-		axes = extractMorphAxes( simplepath.parsePath( envelopeElement.get('d') ) );
+		axes = extractMorphAxes( simplepath.parsePath( envelopeElement.get('d') ) )
 		if axes is None:
 			raise Exception("No axes found on envelope.")
 		axisCount = len(axes)
@@ -102,9 +106,10 @@ class BezierEnvelope(inkex.Effect):
 			if axes[i] is None:
 				raise Exception("axes[%i] is None" % i)
 		# morph the enveloped element according to the axes
-		morphElement( letterElement, envelopeElement, axes );
+		morph_element( letterElement, envelopeElement, axes );
 
-def morphElement( letterElement, envelopeElement, axes ):
+
+def morph_element( letterElement, envelopeElement, axes ):
 	path = simplepath.parsePath( letterElement.get('d') )
 	morphedPath = morphPath( path, axes )
 	letterElement.set("d", simplepath.formatPath(morphedPath))
@@ -113,7 +118,7 @@ def morphElement( letterElement, envelopeElement, axes ):
 # Morphs a path into a new path, according to cubic curved bounding axes.
 def morphPath( path, axes ):
 	bounds = simpletransform.roughBBox( cubicsuperpath.CubicSuperPath(path) )
-	newPath = []
+	new_path = []
 	current = [ 0.0, 0.0 ]
 	start = [ 0.0, 0.0 ]
 
@@ -129,11 +134,11 @@ def morphPath( path, axes ):
 		numPts = getNumPts( segmentType )
 		normalizePoints( bounds, points, percentages, numPts )
 		mapPointsToMorph( axes, percentages, morphed, numPts )
-		addSegment( newPath, segmentType, morphed )
+		addSegment( new_path, segmentType, morphed )
 		if len(points) >= 2:
 			current[0] = points[ len(points)-2 ]
 			current[1] = points[ len(points)-1 ]
-	return newPath
+	return new_path
 
 
 def getNumPts( segmentType ):
@@ -360,7 +365,7 @@ def match( p1, p2, a1, a2 ):
 	#t3 = simpletransform.parseTransform( "scale(%f,%f)"%(scale,scale) )
 	#t4 = simpletransform.parseTransform( "rotate(%f)"%angle_a )
 	t2 = rotateTransform(-angle_p)
-	t3 = scaleTransform( scale, scale )
+	t3 = scale_transform( scale, scale )
 	t4 = rotateTransform( angle_a )
 	t5 = simpletransform.parseTransform( "translate(%f,%f)"%(a1[x],a1[y]) )
 	# transforms in the order they are multiplied
@@ -376,8 +381,9 @@ def match( p1, p2, a1, a2 ):
 def rotateTransform( a ):
 	return [[math.cos(a),-math.sin(a),0],[math.sin(a),math.cos(a),0]]
 
-def scaleTransform( sx, sy ):
+def scale_transform( sx, sy ):
 	return [[sx,0,0],[0,sy,0]]
+
 
 e = BezierEnvelope()
 e.affect()
