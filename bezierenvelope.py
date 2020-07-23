@@ -114,83 +114,84 @@ class BezierEnvelope(inkex.Effect):
             exit()
 
         letter_elem = self.selected[self.options.ids[0]]
-        envelopeElement = self.selected[self.options.ids[1]]
+        envelope_elem = self.selected[self.options.ids[1]]
 
-        if letter_elem.tag != inkex.addNS('path','svg') or envelopeElement.tag != inkex.addNS('path','svg'):
+        if (letter_elem.tag != inkex.addNS('path', 'svg') or
+                envelope_elem.tag != inkex.addNS('path', 'svg')):
             raise Exception("Both letter and envelope must be SVG paths.")
             exit()
 
-        axes = extractMorphAxes( simplepath.parsePath( envelopeElement.get('d') ) )
+        axes = extractMorphAxes(simplepath.parsePath(envelope_elem.get('d')))
         if axes is None:
             raise Exception("No axes found on envelope.")
-        axisCount = len(axes)
-        if axisCount < 4:
+        if len(axes) < 4:
             raise Exception("The envelope path has less than 4 segments.")
-        for i in range( 0, 4 ):
+        for i in range(4):
             if axes[i] is None:
                 raise Exception("axes[%i] is None" % i)
         # morph the enveloped element according to the axes
-        morph_element( letter_elem, envelopeElement, axes );
+        morph_element(letter_elem, envelope_elem, axes)
 
 
-def morph_element( letter_elem, envelopeElement, axes ):
-    path = simplepath.parsePath( letter_elem.get('d') )
-    morphedPath = morphPath( path, axes )
-    letter_elem.set("d", simplepath.formatPath(morphedPath))
+def morph_element(letter_elem, envelope_elem, axes):
+    path = simplepath.parsePath(letter_elem.get('d'))
+    morphed_path = morph_path(path, axes)
+    letter_elem.set("d", simplepath.formatPath(morphed_path))
 
 
 # Morphs a path into a new path, according to cubic curved bounding axes.
-def morphPath( path, axes ):
-    bounds = simpletransform.roughBBox( cubicsuperpath.CubicSuperPath(path) )
+def morph_path(path, axes):
+    bounds = simpletransform.roughBBox(cubicsuperpath.CubicSuperPath(path))
     new_path = []
-    current = [ 0.0, 0.0 ]
-    start = [ 0.0, 0.0 ]
+    current = [0.0, 0.0]
+    start = [0.0, 0.0]
 
     for cmd, params in path:
-        segmentType = cmd
+        segment_type = cmd
         points = params
-        if segmentType == "M":
+        if segment_type == "M":
             start[0] = points[0]
             start[1] = points[1]
-        segmentType = convertSegmentToCubic( current, segmentType, points, start )
+        segment_type = convertSegmentToCubic(
+            current, segment_type, points, start)
         percentages = [0.0]*len(points)
         morphed = [0.0]*len(points)
-        numPts = getNumPts( segmentType )
-        normalizePoints( bounds, points, percentages, numPts )
-        mapPointsToMorph( axes, percentages, morphed, numPts )
-        addSegment( new_path, segmentType, morphed )
+        num_points = getNumPts(segment_type)
+        normalizePoints(bounds, points, percentages, num_points)
+        mapPointsToMorph(axes, percentages, morphed, num_points)
+        addSegment(new_path, segment_type, morphed)
         if len(points) >= 2:
-            current[0] = points[ len(points)-2 ]
-            current[1] = points[ len(points)-1 ]
+            current[0] = points[len(points)-2]
+            current[1] = points[len(points)-1]
     return new_path
 
 
-def getNumPts( segmentType ):
-    if segmentType == "M":
+def getNumPts(segment_type):
+    if segment_type == "M":
         return 1
-    if segmentType == "L":
+    if segment_type == "L":
         return 1
-    if segmentType == "Q":
+    if segment_type == "Q":
         return 2
-    if segmentType == "C":
+    if segment_type == "C":
         return 3
-    if segmentType == "Z":
+    if segment_type == "Z":
         return 0
     return -1
 
 
 
-def addSegment( path, segmentType, points ):
-    path.append([segmentType,points])
+def addSegment(path, segment_type, points):
+    path.append([segment_type,points])
 
 
 # Converts visible path segments (Z,L,Q) into absolute cubic segments (C).
-def convertSegmentToCubic( current, segmentType, points, start ):
-    if segmentType == "M":
-        return "M";
-    if segmentType == "C":
-        return "C";
-    elif segmentType == "Z":
+def convertSegmentToCubic(current, segment_type, points, start):
+    if segment_type == "M":
+        return "M"
+    if segment_type == "C":
+        return "C"
+    elif segment_type == "Z":
         for i in range(0,6):
             points.append(0.0)
         points[4] = start[0]
@@ -202,7 +203,7 @@ def convertSegmentToCubic( current, segmentType, points, start ):
         points[0] = current[0]+thirdX
         points[1] = current[1]+thirdY
         return "C"
-    elif segmentType == "L":
+    elif segment_type == "L":
         for i in range(0,4):
             points.append(0.0)
         points[4] = points[0]
@@ -214,7 +215,7 @@ def convertSegmentToCubic( current, segmentType, points, start ):
         points[0] = current[0]+thirdX
         points[1] = current[1]+thirdY
         return "C"
-    elif segmentType == "Q":
+    elif segment_type == "Q":
         for i in range(0,2):
             points.append(0.0)
         firstThirdX = (points[0] - current[0]) * 2.0 / 3.0
@@ -229,8 +230,8 @@ def convertSegmentToCubic( current, segmentType, points, start ):
         points[3] = points[3] - secondThirdY
         return "C"
     else:
-        sys.stderr.write("unsupported segment type: %s\n" % (segmentType))
-        return segmentType
+        sys.stderr.write("unsupported segment type: %s\n" % (segment_type))
+        return segment_type
 
 
 # Normalizes the points of a path segment, so that they are expressed as percentage coordinates
@@ -238,11 +239,11 @@ def convertSegmentToCubic( current, segmentType, points, start ):
 # @param bounds The bounding box of the shape.
 # @param points The points of the segment.
 # @param percentages The returned points in normalized percentage form.
-# @param numPts
-def normalizePoints( bounds, points, percentages, numPts ):
+# @param num_points
+def normalizePoints(bounds, points, percentages, num_points):
     # bounds has structure xmin,xMax,ymin,yMax
     xmin,xMax,ymin,yMax = bounds
-    for i in range( 0, numPts ):
+    for i in range(0, num_points):
         x = i*2
         y = i*2+1
         percentages[x] = (points[x] - xmin) / (xMax-xmin)
@@ -254,17 +255,17 @@ def normalizePoints( bounds, points, percentages, numPts ):
 # The extraction reverses the last 2 axes, so that they run in parallel with the first 2.
 # @param path The path that is formed by the axes.
 # @return The definition points of the 4 cubic path axes as float arrays, bundled in another array.
-def extractMorphAxes( path ):
+def extractMorphAxes(path):
     points = []
-    current = [ 0.0, 0.0 ]
-    start = [ 0.0, 0.0 ]
+    current = [0.0, 0.0]
+    start = [0.0, 0.0]
     # the curved axis definitions go in here
     axes = [None]*4
     i = 0
 
     for cmd, params in path:
         points = params
-        cmd = convertSegmentToCubic( current, cmd, points, start )
+        cmd = convertSegmentToCubic(current, cmd, points, start)
 
         if cmd == "M":
             current[0] = points[0]
@@ -282,12 +283,12 @@ def extractMorphAxes( path ):
                 index = i
             else:
                 index = 4-i
-            if( i < 2 ):
+            if(i < 2):
                 # axes 1 and 2
-                axes[index] = [    current[0], current[1], points[0], points[1], points[2], points[3], points[4], points[5] ]
-            elif( i < 4 ):
+                axes[index] = [current[0], current[1], points[0], points[1], points[2], points[3], points[4], points[5]]
+            elif(i < 4):
                 # axes 3 and 4
-                axes[index] = [ points[4], points[5], points[2], points[3], points[0], points[1], current[0], current[1] ]
+                axes[index] = [points[4], points[5], points[2], points[3], points[0], points[1], current[0], current[1]]
             else:
                 # more than 4 axes - hopefully it was an unnecessary trailing Z
                 {}
@@ -309,41 +310,41 @@ def extractMorphAxes( path ):
 # @param axes The x and y axes of the envelope.
 # @param percentage The current segment of the letter in normalized percentage form.
 # @param morphed The array to hold the returned morphed path.
-# @param numPts The number of points to be transformed.
-def mapPointsToMorph( axes, percentage, morphed, numPts ):
+# @param num_points The number of points to be transformed.
+def mapPointsToMorph(axes, percentage, morphed, num_points):
     # rename the axes for legibility
     yCubic0 = axes[1]
     yCubic1 = axes[3]
     xCubic0 = axes[0]
     xCubic1 = axes[2]
     # morph each point
-    for i in range( 0, numPts ):
+    for i in range(0, num_points):
         x = i*2
         y = i*2+1
         # tween between the morphed y axes according to the x percentage
-        tweenedY = tweenCubic( yCubic0, yCubic1, percentage[x] )
+        tweenedY = tweenCubic(yCubic0, yCubic1, percentage[x])
         # get 2 points on the morphed x axes
-        xSpot0 = pointOnCubic( xCubic0, percentage[x] )
-        xSpot1 = pointOnCubic( xCubic1, percentage[x] )
+        xSpot0 = pointOnCubic(xCubic0, percentage[x])
+        xSpot1 = pointOnCubic(xCubic1, percentage[x])
         # create a transform that stretches the y axis tween between these 2 points
-        yAnchor0 = [ tweenedY[0], tweenedY[1] ]
-        yAnchor1 = [ tweenedY[6], tweenedY[7] ]
-        xTransform = match( yAnchor0, yAnchor1, xSpot0, xSpot1 )
+        yAnchor0 = [tweenedY[0], tweenedY[1]]
+        yAnchor1 = [tweenedY[6], tweenedY[7]]
+        xTransform = match(yAnchor0, yAnchor1, xSpot0, xSpot1)
         # map the y axis tween to the 2 points by applying the stretch transform
         for j in range(0,4):
             x2 = j*2
             y2 = j*2+1
             pointOnY = [tweenedY[x2],tweenedY[y2]]
-            simpletransform.applyTransformToPoint( xTransform, pointOnY )
+            simpletransform.applyTransformToPoint(xTransform, pointOnY)
             tweenedY[x2] = pointOnY[0]
             tweenedY[y2] = pointOnY[1]
         # get the point on the tweened and transformed y axis according to the y percentage
-        morphedPoint = pointOnCubic( tweenedY, percentage[y] )
+        morphedPoint = pointOnCubic(tweenedY, percentage[y])
         morphed[x] = morphedPoint[0]
         morphed[y] = morphedPoint[1]
 
 # Calculates the point on a cubic bezier curve at the given percentage.
-def pointOnCubic( c, t ):
+def pointOnCubic(c, t):
     point = [0.0,0.0]
     _t_2 = t*t
     _t_3 = _t_2*t
@@ -351,61 +352,61 @@ def pointOnCubic( c, t ):
     _1_t_2 = _1_t*_1_t
     _1_t_3 = _1_t_2*_1_t
 
-    for i in range( 0, 2 ):
+    for i in range(0, 2):
         point[i] = c[i]*_1_t_3 + 3*c[2+i]*_1_t_2*t + 3*c[4+i]*_1_t*_t_2 + c[6+i]*_t_3
     return point
 
 # Tweens 2 bezier curves in a straightforward way,
 # i.e. each of the points on the curve is tweened along a straight line
 # between the respective point on key1 and key2.
-def tweenCubic( key1, key2, percentage ):
+def tweenCubic(key1, key2, percentage):
     tween = [0.0]*len(key1)
-    for i in range ( 0, len(key1) ):
+    for i in range (0, len(key1)):
         tween[i] = key1[i] + percentage * (key2[i] - key1[i])
     return tween
 
 # Calculates a transform that matches 2 points to 2 anchors
 # by rotating and scaling (up or down) along the axis that is formed by
 # a line between the two points.
-def match( p1, p2, a1, a2 ):
+def match(p1, p2, a1, a2):
     x = 0
     y = 1
     # distances
-    dp = [ p2[x]-p1[x], p2[y]-p1[y] ]
-    da = [ a2[x]-a1[x], a2[y]-a1[y] ]
+    dp = [p2[x]-p1[x], p2[y]-p1[y]]
+    da = [a2[x]-a1[x], a2[y]-a1[y]]
     # angles
-    angle_p = math.atan2( dp[x], dp[y] )
-    angle_a = math.atan2( da[x], da[y] )
+    angle_p = math.atan2(dp[x], dp[y])
+    angle_a = math.atan2(da[x], da[y])
     # radians
-    #rp = math.sqrt( dp[x]*dp[x] + dp[y]*dp[y] )
-    #ra = math.sqrt( da[x]*da[x] + da[y]*da[y] )
-    rp = math.hypot( dp[x], dp[y] )
-    ra = math.hypot( da[x], da[y] )
+    #rp = math.sqrt(dp[x]*dp[x] + dp[y]*dp[y])
+    #ra = math.sqrt(da[x]*da[x] + da[y]*da[y])
+    rp = math.hypot(dp[x], dp[y])
+    ra = math.hypot(da[x], da[y])
     # scale
     scale = ra / rp
     # transforms in the order they are applied
-    t1 = simpletransform.parseTransform( "translate(%f,%f)"%(-p1[x],-p1[y]) )
-    #t2 = simpletransform.parseTransform( "rotate(%f)"%(-angle_p) )
-    #t3 = simpletransform.parseTransform( "scale(%f,%f)"%(scale,scale) )
-    #t4 = simpletransform.parseTransform( "rotate(%f)"%angle_a )
+    t1 = simpletransform.parseTransform("translate(%f,%f)"%(-p1[x],-p1[y]))
+    #t2 = simpletransform.parseTransform("rotate(%f)"%(-angle_p))
+    #t3 = simpletransform.parseTransform("scale(%f,%f)"%(scale,scale))
+    #t4 = simpletransform.parseTransform("rotate(%f)"%angle_a)
     t2 = rotateTransform(-angle_p)
-    t3 = scale_transform( scale, scale )
-    t4 = rotateTransform( angle_a )
-    t5 = simpletransform.parseTransform( "translate(%f,%f)"%(a1[x],a1[y]) )
+    t3 = scale_transform(scale, scale)
+    t4 = rotateTransform(angle_a)
+    t5 = simpletransform.parseTransform("translate(%f,%f)"%(a1[x],a1[y]))
     # transforms in the order they are multiplied
     t = t5
-    t = simpletransform.composeTransform( t, t4 )
-    t = simpletransform.composeTransform( t, t3 )
-    t = simpletransform.composeTransform( t, t2 )
-    t = simpletransform.composeTransform( t, t1 )
+    t = simpletransform.composeTransform(t, t4)
+    t = simpletransform.composeTransform(t, t3)
+    t = simpletransform.composeTransform(t, t2)
+    t = simpletransform.composeTransform(t, t1)
     # return the combined transform
     return t
 
 
-def rotateTransform( a ):
+def rotateTransform(a):
     return [[math.cos(a),-math.sin(a),0],[math.sin(a),math.cos(a),0]]
 
-def scale_transform( sx, sy ):
+def scale_transform(sx, sy):
     return [[sx,0,0],[0,sy,0]]
 
 
