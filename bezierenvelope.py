@@ -67,7 +67,9 @@ were copied into this file.
 I hope the comments are not too verbose. Enjoy!
 
 '''
-import inkex, os, simplepath, cubicsuperpath, simpletransform,sys
+import inkex, os, simplepath, cubicsuperpath, simpletransform
+import math
+import sys
 from ffgeom import *
 
 
@@ -80,25 +82,25 @@ class BezierEnvelope(inkex.Effect):
 
 	def effect(self):
 		if len(self.options.ids) < 2:
-			raise Exception, "Two paths must be selected. The 1st is the letter, the 2nd is the envelope and must have 4 sides."
+			raise Exception("Two paths must be selected. The 1st is the letter, the 2nd is the envelope and must have 4 sides.")
 			exit()
 
 		letterElement = self.selected[self.options.ids[0]]
 		envelopeElement = self.selected[self.options.ids[1]]
 
 		if letterElement.tag != inkex.addNS('path','svg') or envelopeElement.tag != inkex.addNS('path','svg'):
-			raise Exception, "Both letter and envelope must be SVG paths."
+			raise Exception("Both letter and envelope must be SVG paths.")
 			exit()
 
 		axes = extractMorphAxes( simplepath.parsePath( envelopeElement.get('d') ) );
 		if axes is None:
-			raise Exception, "No axes found on envelope."
+			raise Exception("No axes found on envelope.")
 		axisCount = len(axes)
 		if axisCount < 4:
-			raise Exception, "The envelope path has less than 4 segments."
+			raise Exception("The envelope path has less than 4 segments.")
 		for i in range( 0, 4 ):
 			if axes[i] is None:
-				raise Exception, "axes[%i] is None" % i
+				raise Exception("axes[%i] is None" % i)
 		# morph the enveloped element according to the axes
 		morphElement( letterElement, envelopeElement, axes );
 
@@ -198,7 +200,7 @@ def convertSegmentToCubic( current, segmentType, points, start ):
 		points[3] = points[3] - secondThirdY
 		return "C"
 	else:
-		print >>sys.stderr, "unsupported segment type: " + segmentType
+		sys.stderr.write("unsupported segment type: %s\n" % (segmentType))
 		return segmentType
 
 
@@ -267,7 +269,7 @@ def extractMorphAxes( path ):
 			#do nothing
 			{}
 		else:
-			raise Exception, "Unsupported segment type: %s" % cmd
+			raise Exception("Unsupported segment type: %s" % cmd)
 			return None
 
 	return axes
