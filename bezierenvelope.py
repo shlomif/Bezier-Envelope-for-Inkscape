@@ -37,7 +37,7 @@ The 4 sides of the envelope are then interpreted as deformed axes.
 Points at 0% or 100% could be placed along these axes, but because most points
 are somewhere inside the bounding box, some tweening of the axes must be done.
 
-The function mapPointsToMorph does the tweening.
+The function map_points_to_morph does the tweening.
 Say, some point is at x=30%, y=40%.
 For the tweening, the function tweenCubic first calculates a straight tween
 of the y axis at the x percentage of 30%.
@@ -158,7 +158,7 @@ def morph_path(path, axes):
         morphed = [0.0]*len(points)
         num_points = get_num_points(segment_type)
         normalize_points(bounds, points, percentages, num_points)
-        mapPointsToMorph(axes, percentages, morphed, num_points)
+        map_points_to_morph(axes, percentages, morphed, num_points)
         add_segment(new_path, segment_type, morphed)
         if len(points) >= 2:
             current[0] = points[len(points)-2]
@@ -287,10 +287,13 @@ def extract_morph_axes(path):
                 index = 4-i
             if(i < 2):
                 # axes 1 and 2
-                axes[index] = [current[0], current[1], points[0], points[1], points[2], points[3], points[4], points[5]]
+                axes[index] = current[0:2] + points[0:6]
             elif(i < 4):
                 # axes 3 and 4
-                axes[index] = [points[4], points[5], points[2], points[3], points[0], points[1], current[0], current[1]]
+                axes[index] = [
+                    points[4], points[5], points[2], points[3],
+                    points[0], points[1], current[0], current[1]
+                ]
             else:
                 # more than 4 axes - hopefully it was an unnecessary trailing Z
                 {}
@@ -298,8 +301,8 @@ def extract_morph_axes(path):
             current[1] = points[5]
             i = i + 1
         elif cmd == "Z":
-            #do nothing
-            {}
+            # do nothing
+            pass
         else:
             raise Exception("Unsupported segment type: %s" % cmd)
             return None
@@ -307,13 +310,16 @@ def extract_morph_axes(path):
     return axes
 
 
-# Projects points in percentage coordinates into a morphed coordinate system that is framed
-# by 2 x cubic curves (along the x axis) and 2 y cubic curves (along the y axis).
+# Projects points in percentage coordinates into a morphed coordinate
+# system that is framed
+# by 2 x cubic curves (along the x axis) and 2 y cubic curves
+# (along the y axis).
 # @param axes The x and y axes of the envelope.
-# @param percentage The current segment of the letter in normalized percentage form.
+# @param percentage The current segment of the letter in
+#        normalized percentage form.
 # @param morphed The array to hold the returned morphed path.
 # @param num_points The number of points to be transformed.
-def mapPointsToMorph(axes, percentage, morphed, num_points):
+def map_points_to_morph(axes, percentage, morphed, num_points):
     # rename the axes for legibility
     yCubic0 = axes[1]
     yCubic1 = axes[3]
