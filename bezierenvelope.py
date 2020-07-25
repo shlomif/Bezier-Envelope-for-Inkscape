@@ -68,6 +68,8 @@ I hope the comments are not too verbose. Enjoy!
 
 '''
 import inkex
+from inkex import Transform
+from inkex.paths import Path
 import simplepath
 import cubicsuperpath
 import simpletransform
@@ -96,7 +98,7 @@ class BezierEnvelope(inkex.Effect):
 			raise Exception("Both letter and envelope must be SVG paths.")
 			exit()
 
-		axes = extractMorphAxes( simplepath.parsePath( envelopeElement.get('d') ) )
+		axes = extractMorphAxes( Path( envelopeElement.get('d') ).to_arrays() )
 		if axes is None:
 			raise Exception("No axes found on envelope.")
 		axisCount = len(axes)
@@ -110,7 +112,7 @@ class BezierEnvelope(inkex.Effect):
 
 
 def morph_element( letterElement, envelopeElement, axes ):
-	path = simplepath.parsePath( letterElement.get('d') )
+	path = Path( letterElement.get('d') ).to_arrays()
 	morphedPath = morphPath( path, axes )
 	letterElement.set("d", simplepath.formatPath(morphedPath))
 
@@ -165,14 +167,14 @@ def convertSegmentToCubic( current, segmentType, points, start ):
 	if segmentType == "H":
 		# print(current, points, start)
 		assert len(points) == 1
-		points.append(current[1])
+		points.insert(0, current[0])
 		# points[0] += current[0]
 		# print(segmentType, current, points, start)
 		return convertSegmentToCubic(current, "L", points, start)
 	elif segmentType == "V":
 		# print(points)
 		assert len(points) == 1
-		points.insert(0, current[0])
+		points.append(current[1])
 		# points[1] += current[1]
 		# print(segmentType, current, points, start)
 		return convertSegmentToCubic(current, "L", points, start)
@@ -374,20 +376,20 @@ def match( p1, p2, a1, a2 ):
 	# scale
 	scale = ra / rp
 	# transforms in the order they are applied
-	t1 = simpletransform.parseTransform( "translate(%f,%f)"%(-p1[x],-p1[y]) )
-	#t2 = simpletransform.parseTransform( "rotate(%f)"%(-angle_p) )
-	#t3 = simpletransform.parseTransform( "scale(%f,%f)"%(scale,scale) )
-	#t4 = simpletransform.parseTransform( "rotate(%f)"%angle_a )
+	t1 = Transform( "translate(%f,%f)"%(-p1[x],-p1[y]) ).matrix
+	#t2 = Transform( "rotate(%f)"%(-angle_p) ).matrix
+	#t3 = Transform( "scale(%f,%f)"%(scale,scale) ).matrix
+	#t4 = Transform( "rotate(%f)"%angle_a ).matrix
 	t2 = rotateTransform(-angle_p)
 	t3 = scale_transform( scale, scale )
 	t4 = rotateTransform( angle_a )
-	t5 = simpletransform.parseTransform( "translate(%f,%f)"%(a1[x],a1[y]) )
+	t5 = Transform( "translate(%f,%f)"%(a1[x],a1[y]) ).matrix
 	# transforms in the order they are multiplied
 	t = t5
-	t = simpletransform.composeTransform( t, t4 )
-	t = simpletransform.composeTransform( t, t3 )
-	t = simpletransform.composeTransform( t, t2 )
-	t = simpletransform.composeTransform( t, t1 )
+	t = Transform(t) * Transform(t4)
+	t = Transform(t) * Transform(t3)
+	t = Transform(t) * Transform(t2)
+	t = Transform(t) * Transform(t1)
 	# return the combined transform
 	return t
 
