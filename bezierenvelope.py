@@ -89,8 +89,8 @@ class BezierEnvelope(inkex.Effect):
 			raise Exception("Two paths must be selected. The 1st is the letter, the 2nd is the envelope and must have 4 sides.")
 			exit()
 
-		letterElement = self.selected[self.options.ids[0]]
-		envelopeElement = self.selected[self.options.ids[1]]
+		letterElement = self.svg.selected[self.options.ids[0]]
+		envelopeElement = self.svg.selected[self.options.ids[1]]
 
 		if letterElement.tag != inkex.addNS('path','svg') or envelopeElement.tag != inkex.addNS('path','svg'):
 			raise Exception("Both letter and envelope must be SVG paths.")
@@ -386,5 +386,4 @@ def scale_transform( sx, sy ):
 
 
 e = BezierEnvelope()
-e.affect()
-
+e.run()
