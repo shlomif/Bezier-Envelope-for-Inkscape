@@ -39,7 +39,7 @@ are somewhere inside the bounding box, some tweening of the axes must be done.
 
 The function map_points_to_morph does the tweening.
 Say, some point is at x=30%, y=40%.
-For the tweening, the function tweenCubic first calculates a straight tween
+For the tweening, the function tween_cubic first calculates a straight tween
 of the y axis at the x percentage of 30%.
 This tween axis now floats somewhere between the y axis keys
 at the x percentage,
@@ -330,10 +330,10 @@ def map_points_to_morph(axes, percentage, morphed, num_points):
         x = i*2
         y = i*2+1
         # tween between the morphed y axes according to the x percentage
-        tweened_y = tweenCubic(y_cubic_0, y_cubic_1, percentage[x])
+        tweened_y = tween_cubic(y_cubic_0, y_cubic_1, percentage[x])
         # get 2 points on the morphed x axes
-        x_spot_0 = pointOnCubic(x_cubic_0, percentage[x])
-        x_spot_1 = pointOnCubic(x_cubic_1, percentage[x])
+        x_spot_0 = calc_point_on_cubic(x_cubic_0, percentage[x])
+        x_spot_1 = calc_point_on_cubic(x_cubic_1, percentage[x])
         # create a transform that stretches the
         # y axis tween between these 2 points
         y_anchor_0 = [tweened_y[0], tweened_y[1]]
@@ -350,13 +350,13 @@ def map_points_to_morph(axes, percentage, morphed, num_points):
             tweened_y[y2] = point_on_y[1]
         # get the point on the tweened and transformed y axis
         # according to the y percentage
-        morphed_point = pointOnCubic(tweened_y, percentage[y])
+        morphed_point = calc_point_on_cubic(tweened_y, percentage[y])
         morphed[x] = morphed_point[0]
         morphed[y] = morphed_point[1]
 
 
 # Calculates the point on a cubic bezier curve at the given percentage.
-def pointOnCubic(c, t):
+def calc_point_on_cubic(c, t):
     point = [0.0, 0.0]
     _t_2 = t*t
     _t_3 = _t_2*t
@@ -365,17 +365,20 @@ def pointOnCubic(c, t):
     _1_t_3 = _1_t_2*_1_t
 
     for i in range(0, 2):
-        point[i] = c[i]*_1_t_3 + 3*c[2+i]*_1_t_2*t + 3*c[4+i]*_1_t*_t_2 + c[6+i]*_t_3
+        point[i] = c[i]*_1_t_3 + 3*c[2+i]*_1_t_2*t + \
+            3*c[4+i]*_1_t*_t_2 + c[6+i]*_t_3
     return point
+
 
 # Tweens 2 bezier curves in a straightforward way,
 # i.e. each of the points on the curve is tweened along a straight line
 # between the respective point on key1 and key2.
-def tweenCubic(key1, key2, percentage):
-    tween = [0.0]*len(key1)
-    for i in range (0, len(key1)):
-        tween[i] = key1[i] + percentage * (key2[i] - key1[i])
+def tween_cubic(key1, key2, percentage):
+    tween = []
+    for i in range(len(key1)):
+        tween.append(key1[i] + percentage * (key2[i] - key1[i]))
     return tween
+
 
 # Calculates a transform that matches 2 points to 2 anchors
 # by rotating and scaling (up or down) along the axis that is formed by
@@ -390,21 +393,25 @@ def match(p1, p2, a1, a2):
     angle_p = math.atan2(dp[x], dp[y])
     angle_a = math.atan2(da[x], da[y])
     # radians
-    #rp = math.sqrt(dp[x]*dp[x] + dp[y]*dp[y])
-    #ra = math.sqrt(da[x]*da[x] + da[y]*da[y])
+    # rp = math.sqrt(dp[x]*dp[x] + dp[y]*dp[y])
+    # ra = math.sqrt(da[x]*da[x] + da[y]*da[y])
     rp = math.hypot(dp[x], dp[y])
     ra = math.hypot(da[x], da[y])
     # scale
     scale = ra / rp
     # transforms in the order they are applied
-    t1 = simpletransform.parseTransform("translate(%f,%f)"%(-p1[x], -p1[y]))
-    #t2 = simpletransform.parseTransform("rotate(%f)"%(-angle_p))
-    #t3 = simpletransform.parseTransform("scale(%f,%f)"%(scale, scale))
-    #t4 = simpletransform.parseTransform("rotate(%f)"%angle_a)
-    t2 = rotateTransform(-angle_p)
+    t1 = simpletransform.parseTransform(
+        "translate(%f,%f)" % (-p1[x], -p1[y])
+    )
+    # t2 = simpletransform.parseTransform("rotate(%f)"%(-angle_p))
+    # t3 = simpletransform.parseTransform("scale(%f,%f)"%(scale, scale))
+    # t4 = simpletransform.parseTransform("rotate(%f)"%angle_a)
+    t2 = rotate_transform(-angle_p)
     t3 = scale_transform(scale, scale)
-    t4 = rotateTransform(angle_a)
-    t5 = simpletransform.parseTransform("translate(%f,%f)"%(a1[x], a1[y]))
+    t4 = rotate_transform(angle_a)
+    t5 = simpletransform.parseTransform(
+        "translate(%f,%f)" % (a1[x], a1[y])
+    )
     # transforms in the order they are multiplied
     t = t5
     t = simpletransform.composeTransform(t, t4)
@@ -415,10 +422,11 @@ def match(p1, p2, a1, a2):
     return t
 
 
-def rotateTransform(a):
+def rotate_transform(a):
     c = math.cos(a)
     s = math.sin(a)
     return [[c, -s, 0], [s, c, 0]]
+
 
 def scale_transform(sx, sy):
     return [[sx, 0, 0], [0, sy, 0]]
@@ -426,4 +434,3 @@ def scale_transform(sx, sy):
 
 e = BezierEnvelope()
 e.affect()
-
