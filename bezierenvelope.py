@@ -70,6 +70,7 @@ I hope the comments are not too verbose. Enjoy!
 import inkex
 from inkex import Transform
 from inkex.paths import Path
+from inkex import paths
 import simplepath
 import cubicsuperpath
 import simpletransform
@@ -114,12 +115,13 @@ class BezierEnvelope(inkex.Effect):
 def morph_element( letterElement, envelopeElement, axes ):
 	path = Path( letterElement.get('d') ).to_arrays()
 	morphedPath = morphPath( path, axes )
-	letterElement.set("d", simplepath.formatPath(morphedPath))
+	letterElement.set("d", str(Path(morphedPath)))
 
 
 # Morphs a path into a new path, according to cubic curved bounding axes.
 def morphPath( path, axes ):
-	bounds = simpletransform.roughBBox( cubicsuperpath.CubicSuperPath(path) )
+	bounds = [y for x in list(Path(paths.Path(path).to_superpath()).bounding_box()) for y in list(x)]
+	assert len(bounds) == 4
 	new_path = []
 	current = [ 0.0, 0.0 ]
 	start = [ 0.0, 0.0 ]
@@ -326,7 +328,7 @@ def mapPointsToMorph( axes, percentage, morphed, numPts ):
 			x2 = j*2
 			y2 = j*2+1
 			pointOnY = [tweenedY[x2],tweenedY[y2]]
-			simpletransform.applyTransformToPoint( xTransform, pointOnY )
+			Transform(xTransform).apply_to_point(pointOnY)
 			tweenedY[x2] = pointOnY[0]
 			tweenedY[y2] = pointOnY[1]
 		# get the point on the tweened and transformed y axis according to the y percentage
