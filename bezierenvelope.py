@@ -321,35 +321,39 @@ def extract_morph_axes(path):
 # @param num_points The number of points to be transformed.
 def map_points_to_morph(axes, percentage, morphed, num_points):
     # rename the axes for legibility
-    yCubic0 = axes[1]
-    yCubic1 = axes[3]
-    xCubic0 = axes[0]
-    xCubic1 = axes[2]
+    y_cubic_0 = axes[1]
+    y_cubic_1 = axes[3]
+    x_cubic_0 = axes[0]
+    x_cubic_1 = axes[2]
     # morph each point
     for i in range(0, num_points):
         x = i*2
         y = i*2+1
         # tween between the morphed y axes according to the x percentage
-        tweenedY = tweenCubic(yCubic0, yCubic1, percentage[x])
+        tweened_y = tweenCubic(y_cubic_0, y_cubic_1, percentage[x])
         # get 2 points on the morphed x axes
-        xSpot0 = pointOnCubic(xCubic0, percentage[x])
-        xSpot1 = pointOnCubic(xCubic1, percentage[x])
-        # create a transform that stretches the y axis tween between these 2 points
-        yAnchor0 = [tweenedY[0], tweenedY[1]]
-        yAnchor1 = [tweenedY[6], tweenedY[7]]
-        xTransform = match(yAnchor0, yAnchor1, xSpot0, xSpot1)
-        # map the y axis tween to the 2 points by applying the stretch transform
+        x_spot_0 = pointOnCubic(x_cubic_0, percentage[x])
+        x_spot_1 = pointOnCubic(x_cubic_1, percentage[x])
+        # create a transform that stretches the
+        # y axis tween between these 2 points
+        y_anchor_0 = [tweened_y[0], tweened_y[1]]
+        y_anchor_1 = [tweened_y[6], tweened_y[7]]
+        x_transform = match(y_anchor_0, y_anchor_1, x_spot_0, x_spot_1)
+        # map the y axis tween to the 2 points by
+        # applying the stretch transform
         for j in range(4):
             x2 = j*2
             y2 = j*2+1
-            pointOnY = [tweenedY[x2], tweenedY[y2]]
-            simpletransform.applyTransformToPoint(xTransform, pointOnY)
-            tweenedY[x2] = pointOnY[0]
-            tweenedY[y2] = pointOnY[1]
-        # get the point on the tweened and transformed y axis according to the y percentage
-        morphedPoint = pointOnCubic(tweenedY, percentage[y])
-        morphed[x] = morphedPoint[0]
-        morphed[y] = morphedPoint[1]
+            point_on_y = [tweened_y[x2], tweened_y[y2]]
+            simpletransform.applyTransformToPoint(x_transform, point_on_y)
+            tweened_y[x2] = point_on_y[0]
+            tweened_y[y2] = point_on_y[1]
+        # get the point on the tweened and transformed y axis
+        # according to the y percentage
+        morphed_point = pointOnCubic(tweened_y, percentage[y])
+        morphed[x] = morphed_point[0]
+        morphed[y] = morphed_point[1]
+
 
 # Calculates the point on a cubic bezier curve at the given percentage.
 def pointOnCubic(c, t):
