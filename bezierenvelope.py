@@ -163,10 +163,18 @@ def addSegment( path, segmentType, points ):
 # Converts visible path segments (Z,L,Q) into absolute cubic segments (C).
 def convertSegmentToCubic( current, segmentType, points, start ):
 	if segmentType == "H":
-		points.insert(0, 0.0)
+		# print(current, points, start)
+		assert len(points) == 1
+		points.append(current[1])
+		# points[0] += current[0]
+		# print(segmentType, current, points, start)
 		return convertSegmentToCubic(current, "L", points, start)
 	elif segmentType == "V":
-		points.append(0.0)
+		# print(points)
+		assert len(points) == 1
+		points.insert(0, current[0])
+		# points[1] += current[1]
+		# print(segmentType, current, points, start)
 		return convertSegmentToCubic(current, "L", points, start)
 	if segmentType == "M":
 		return "M";
