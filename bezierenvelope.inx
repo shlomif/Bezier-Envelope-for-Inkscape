@@ -11,6 +11,6 @@
         </effects-menu>
    </effect>
    <script>
-      <command reldir="extensions" interpreter="python">fablabchemnitz_bezierenvelope.py</command>
+      <command reldir="extensions" interpreter="python">ezierenvelope.py</command>
    </script>
 </inkscape-extension>
