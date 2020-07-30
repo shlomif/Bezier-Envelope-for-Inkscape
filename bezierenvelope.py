@@ -443,4 +443,4 @@ def scale_transform(sx, sy):
 
 
 e = BezierEnvelope()
-e.affect()
+e.run()
