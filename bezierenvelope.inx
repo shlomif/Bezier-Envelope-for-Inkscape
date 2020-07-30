@@ -1,10 +1,9 @@
-<inkscape-extension>
+<?xml version="1.0" encoding="UTF-8"?>
+<inkscape-extension xmlns="http://www.inkscape.org/namespace/inkscape/extension">
     <_name>Bezier Envelope</_name>
     <id>de.gerrit_karius.envelope</id>
-	<dependency type="executable" location="extensions">bezierenvelope.py</dependency>
-	<dependency type="executable" location="extensions">inkex.py</dependency>
     <effect>
-	<object-type>path</object-type>
+        <object-type>path</object-type>
         <effects-menu>
             <submenu _name="Modify Path"/>
         </effects-menu>
