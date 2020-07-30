@@ -88,13 +88,11 @@ I hope the comments are not too verbose. Enjoy!
 import math
 import sys
 
-import cubicsuperpath
-
 import inkex
+from inkex import Transform
+from inkex import paths
+from inkex.paths import Path
 
-import simplepath
-
-import simpletransform
 # from ffgeom import *
 # import ffgeom
 
@@ -113,15 +111,15 @@ class BezierEnvelope(inkex.Effect):
                 "the letter, the 2nd is the envelope and must have 4 sides.")
             exit()
 
-        letter_elem = self.selected[self.options.ids[0]]
-        envelope_elem = self.selected[self.options.ids[1]]
+        letter_elem = self.svg.selected[self.options.ids[0]]
+        envelope_elem = self.svg.selected[self.options.ids[1]]
 
         if (letter_elem.tag != inkex.addNS('path', 'svg') or
                 envelope_elem.tag != inkex.addNS('path', 'svg')):
             raise Exception("Both letter and envelope must be SVG paths.")
             exit()
 
-        axes = extract_morph_axes(simplepath.parsePath(envelope_elem.get('d')))
+        axes = extract_morph_axes(Path(envelope_elem.get('d')).to_arrays())
         if axes is None:
             raise Exception("No axes found on envelope.")
         if len(axes) < 4:
@@ -134,14 +132,16 @@ class BezierEnvelope(inkex.Effect):
 
 
 def morph_element(letter_elem, envelope_elem, axes):
-    path = simplepath.parsePath(letter_elem.get('d'))
+    path = Path(letter_elem.get('d')).to_arrays()
     morphed_path = morph_path(path, axes)
-    letter_elem.set("d", simplepath.formatPath(morphed_path))
+    letter_elem.set("d", str(Path(morphed_path)))
 
 
 # Morphs a path into a new path, according to cubic curved bounding axes.
 def morph_path(path, axes):
-    bounds = simpletransform.roughBBox(cubicsuperpath.CubicSuperPath(path))
+    bounds = [
+        y for x in list(Path(paths.Path(path).to_superpath()).bounding_box())
+        for y in list(x)]
     new_path = []
     current = [0.0, 0.0]
     start = [0.0, 0.0]
@@ -186,6 +186,20 @@ def add_segment(path, segment_type, points):
 
 # Converts visible path segments (Z, L, Q) into absolute cubic segments (C).
 def convert_segment_to_cubic(current, segment_type, points, start):
+    if segment_type == "H":
+        # print(current, points, start)
+        assert len(points) == 1
+        points.insert(0, current[0])
+        # points[0] += current[0]
+        # print(segmentType, current, points, start)
+        return convert_segment_to_cubic(current, "L", points, start)
+    if segment_type == "V":
+        # print(points)
+        assert len(points) == 1
+        points.append(current[1])
+        # points[1] += current[1]
+        # print(segmentType, current, points, start)
+        return convert_segment_to_cubic(current, "L", points, start)
     if segment_type == "M":
         return "M"
     if segment_type == "C":
@@ -345,7 +359,7 @@ def map_points_to_morph(axes, percentage, morphed, num_points):
             x2 = j*2
             y2 = j*2+1
             point_on_y = [tweened_y[x2], tweened_y[y2]]
-            simpletransform.applyTransformToPoint(x_transform, point_on_y)
+            Transform(x_transform).apply_to_point(point_on_y)
             tweened_y[x2] = point_on_y[0]
             tweened_y[y2] = point_on_y[1]
         # get the point on the tweened and transformed y axis
@@ -400,24 +414,20 @@ def match(p1, p2, a1, a2):
     # scale
     scale = ra / rp
     # transforms in the order they are applied
-    t1 = simpletransform.parseTransform(
-        "translate(%f,%f)" % (-p1[x], -p1[y])
-    )
+    t1 = Transform("translate(%f,%f)" % (-p1[x], -p1[y])).matrix
     # t2 = simpletransform.parseTransform("rotate(%f)"%(-angle_p))
     # t3 = simpletransform.parseTransform("scale(%f,%f)"%(scale, scale))
     # t4 = simpletransform.parseTransform("rotate(%f)"%angle_a)
     t2 = rotate_transform(-angle_p)
     t3 = scale_transform(scale, scale)
     t4 = rotate_transform(angle_a)
-    t5 = simpletransform.parseTransform(
-        "translate(%f,%f)" % (a1[x], a1[y])
-    )
+    t5 = Transform("translate(%f,%f)" % (a1[x], a1[y])).matrix
     # transforms in the order they are multiplied
     t = t5
-    t = simpletransform.composeTransform(t, t4)
-    t = simpletransform.composeTransform(t, t3)
-    t = simpletransform.composeTransform(t, t2)
-    t = simpletransform.composeTransform(t, t1)
+    t = Transform(t) * Transform(t4)
+    t = Transform(t) * Transform(t3)
+    t = Transform(t) * Transform(t2)
+    t = Transform(t) * Transform(t1)
     # return the combined transform
     return t
 
