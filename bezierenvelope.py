@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 '''
 Bezier Envelope extension for Inkscape
 Copyright (C) 2009 Gerrit Karius
