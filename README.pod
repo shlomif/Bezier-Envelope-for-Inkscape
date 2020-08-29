@@ -13,8 +13,10 @@ It is from the original author, GERRIT KARIUS.
 =head1 INSTRUCTIONS
 
 Clone the repository and copy the C<bezierenvelope.inx> and C<bezierenvelope.py>
-files to the “Inkscape→ share→ extensions” folder. The extension can be accessed
-using the “Extensions → Modify Path → Bezier Envelope” menu item.
+files to the “Inkscape→ share→ extensions” folder. This can also be achieved by
+running C<make install> on UNIX flavored systems.
+
+The extension can be accessed using the “Extensions → Modify Path → Bezier Envelope” menu item.
 (Not to be confused with the plain “Envelope” menu item)
 
 =cut
