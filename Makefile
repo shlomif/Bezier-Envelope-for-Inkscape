@@ -1,4 +1,7 @@
+EXTENSIONS_DIR = $(HOME)/.config/inkscape/extensions
+
 all:
 
 install:
-	cp -f bezierenvelope.inx bezierenvelope.py ~/.config/inkscape/extensions/
+	mkdir -p $(EXTENSIONS_DIR)
+	cp -f bezierenvelope.inx bezierenvelope.py $(EXTENSIONS_DIR)/
